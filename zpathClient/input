@@ -1,1 +1,1 @@
-ADD "new" (INT:@"key":2, DBL:@"key2":3.5, STR:@"key3":"lol", BOOL:@"key4":"true") /"test1"[@"key6">"2"]//"test2"[@"key1"="v"]&![@"key2"="v"]/@"test3";
+JOIN [@"key"="lol"]|![@"key2"<="3"] ON /"test1"//"test2"![@"key" > "4"]&[@"key2" < "1"];

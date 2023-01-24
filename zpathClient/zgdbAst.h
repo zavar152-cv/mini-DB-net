@@ -130,6 +130,8 @@ typedef struct ast {
 
 ast getAst();
 
+void setAst();
+
 void printAst(ast* tree);
 
 size_t getSize();

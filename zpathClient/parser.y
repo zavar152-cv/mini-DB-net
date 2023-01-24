@@ -9,7 +9,8 @@ extern char* yytext;
 int yylex();
 void yyerror(const char *s);
 
-struct ast tree;
+struct ast tree = {0};
+const struct ast emptyTree = {0};
 struct astStep* aStep;
 struct astPredicate* aPredicate;
 
@@ -362,6 +363,46 @@ void cleanKey(char* string) {
 
 ast getAst() {
     return tree;
+}
+
+void setAst() {
+    tree.type = AST_ADD;
+    tree.docName = NULL;
+    tree.elName = NULL;
+    tree.value = NULL;
+
+                astAddSchema* temp4 = tree.first;
+                while (temp4 != NULL) {
+                    temp4 = temp4->next;
+                    free(temp4);
+                }
+                    free(tree.first);
+            astPredicate* temp2 = tree.pred;
+            while (temp2 != NULL) {
+                temp2 = temp2->nextPredicate;
+                free(temp2);
+            }
+            free(tree.pred);
+                    astStep* temp3 = tree.path.firstStep;
+                    while (temp3 != NULL) {
+                        temp3 = temp3->nextStep;
+                        free(temp3);
+                    }
+                    free(tree.path.firstStep);
+    tree.path.size = 0;
+    tree = emptyTree;
+
+        astPredicate* temp = aPredicate;
+        while (temp != NULL) {
+            temp = temp->nextPredicate;
+            free(temp);
+        }
+        free(aPredicate);
+
+    symbolValue = 0;
+    isFirstPred = true;
+    inv = false;
+    mallocSize = 0;
 }
 
 size_t getSize() {
