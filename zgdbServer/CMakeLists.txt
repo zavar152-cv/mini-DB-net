@@ -3,7 +3,9 @@ project(ZGDBProject C)
 
 set(CMAKE_C_STANDARD 17)
 
-include_directories("zgdb" "lib")
+find_package(LibXml2 REQUIRED)
+
+include_directories("zgdb" "lib" ${LIBXML2_INCLUDE_DIR})
 
 set(GENERAL_SRC zgdb/format/zgdbfile.c zgdb/format/zgdbfile.h zgdb/index/zgdbindex.c zgdb/index/zgdbindex.h
         zgdb/data/zgdbdata.c zgdb/data/zgdbdata.h zgdb/index/list/freelist.c zgdb/index/list/freelist.h
@@ -22,5 +24,6 @@ endif (WIN32)
 if (UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address")
     add_executable(${PROJECT_NAME} ${GENERAL_SRC} ${MAIN})
+    target_link_libraries(${PROJECT_NAME} ${LIBXML2_LIBRARIES})
 endif (UNIX)
 

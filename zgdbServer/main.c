@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 int main(int argc, char** argv) {
     int sock, listener;
@@ -33,21 +35,23 @@ int main(int argc, char** argv) {
             exit(3);
         }
 
-        size_t msgSize = 0;
+        int msgSize = 0;
 
         while (1) {
-            bytes_read = recv(sock, &msgSize, sizeof(size_t), 0);
+            bytes_read = recv(sock, &msgSize, sizeof(int), 0);
             if (bytes_read <= 0) break;
 
             char buf[msgSize];
             bytes_read = recv(sock, buf, msgSize, 0);
             if (bytes_read <= 0) break;
-            printf("%s", buf);
+
+            xmlDocPtr pDoc = xmlReadMemory(buf, msgSize, 0, NULL, XML_PARSE_RECOVER);
+            xmlSaveFormatFileEnc("-", pDoc, "UTF-8", 1);
 
             char message[] = "Hello there from server!\n";
             msgSize = sizeof(message);
 
-            send(sock, &msgSize, sizeof(size_t), 0);
+            send(sock, &msgSize, sizeof(int), 0);
             send(sock, message, msgSize, 0);
         }
 

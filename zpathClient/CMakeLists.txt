@@ -25,5 +25,5 @@ file(GLOB source_files
         ${CMAKE_CURRENT_SOURCE_DIR}/*.c
         )
 
-add_executable(${PROJECT_NAME} ${source_files} ${BISON_PARSER_OUTPUTS} ${FLEX_LEXER_OUTPUTS} zgdbAst.h main.c zgdbAst.c)
+add_executable(${PROJECT_NAME} ${source_files} ${BISON_PARSER_OUTPUTS} ${FLEX_LEXER_OUTPUTS} zgdbAst.h main.c zgdbAst.c zpathXml.c zpathXml.h)
 target_link_libraries(${PROJECT_NAME} m ${LIBXML2_LIBRARIES})
