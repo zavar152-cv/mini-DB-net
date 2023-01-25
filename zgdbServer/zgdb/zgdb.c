@@ -520,6 +520,8 @@ bool calculatePredicate(zgdbFile* file, document* temp, step s, uint64_t docNumb
                 generalRes = generalRes && res;
             else if(currentPredicate->logOp == OR)
                 generalRes = generalRes || res;
+        } else if(currentPredicate->type == BY_ELEMENT) {
+            //TODO
         }
         currentPredicate = currentPredicate->nextPredicate;
     }
@@ -542,7 +544,14 @@ void findIf0(zgdbFile* file, uint64_t order, uint64_t orderParent, path p, findI
     uint64_t depth = 0;
     resultList contextList = createResultList();
     if (hasNextDoc(&rootIterator)) {
-        nextDoc(file, &rootIterator, &depth);//skip root
+        document root = nextDoc(file, &rootIterator, &depth);//skip root
+        if(p.size == 1 && p.steps[0].sType == DOCUMENT_STEP && !strcmp(p.steps[0].stepName, "")) {
+            ifResult->type = DOCUMENT_RESULT;
+            insertResult(&ifResult->documentList, root);
+            destroyDocIterator(&rootIterator);
+            destroyResultList(&contextList);
+            return;
+        }
     }
     if (hasNextDoc(&rootIterator)) {
         insertResult(&contextList, nextDoc(file, &rootIterator, &depth));
@@ -671,20 +680,33 @@ void findIf0(zgdbFile* file, uint64_t order, uint64_t orderParent, path p, findI
     destroyResultList(&contextList);
 }
 
-resultList join(zgdbFile* file, document parent) {
+resultList join(zgdbFile* file, document parent, predicate* p) {
     resultList pList = createResultList();
 
     document temp;
     documentHeader tempHeader;
     uint64_t tempIndex = parent.header.indexSon;
+    step s;
+    s.pred = p;
+    strcpy(s.stepName, parent.header.name);
+    s.sType = DOCUMENT_STEP;
+    s.pType = ABSOLUTE_PATH;
+    uint64_t docNumber = 0;
     while(tempIndex != 0) {
         tempHeader = getDocumentHeader(file, tempIndex);
         temp.header = tempHeader;
         temp.isRoot = isRootDocumentHeader(tempHeader);
         temp.indexParent = parent.header.indexAttached;
         tempIndex = tempHeader.indexBrother;
-        insertResult(&pList, temp);
+        if(p == NULL) {
+            insertResult(&pList, temp);
+        } else if(p != NULL && calculatePredicate(file, &temp, s, docNumber)) {
+            insertResult(&pList, temp);
+        }
+        docNumber++;
     }
+
+
 
     return pList;
 }

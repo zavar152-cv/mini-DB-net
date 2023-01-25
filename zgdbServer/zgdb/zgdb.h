@@ -20,7 +20,8 @@ typedef enum updateElementStatus {
     UPDATE_OK = 0,
     ELEMENT_NOT_FOUND = 1,
     INVALID_NAME = 2,
-    TYPE_PARSE_ERROR = 3
+    TYPE_PARSE_ERROR = 3,
+    DOCUMENT_NOT_FOUND = 4
 } updateElementStatus;
 
 typedef enum createStatus {
@@ -63,6 +64,14 @@ void printDocumentElements(zgdbFile* file, document document);
 
 findIfResult findIfFromRoot(zgdbFile* file, path p);
 
-resultList join(zgdbFile* file, document parent);
+resultList join(zgdbFile* file, document parent, predicate* p);
+
+void str2boolean(uint8_t *out, char *s);
+
+str2doubleStatus str2double(double *out, char *s);
+
+str2intStatus str2int(int32_t *out, char *s);
+
+str2intStatus str2long(int64_t *out, char *s);
 
 #endif

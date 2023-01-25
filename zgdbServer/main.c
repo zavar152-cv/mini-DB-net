@@ -4,8 +4,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+#include "zgdbXmlRequest.h"
 
 int main(int argc, char** argv) {
     int sock, listener;
@@ -19,7 +18,7 @@ int main(int argc, char** argv) {
     }
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(25565);
+    addr.sin_port = htons(25561);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(listener, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
         perror("bind");
@@ -28,8 +27,23 @@ int main(int argc, char** argv) {
 
     listen(listener, 1);
 
+    zgdbFile* pFile = init("/tmp/server1.zgdb");
+
+    document rootDoc;
+    rootDoc.header = getDocumentHeader(pFile, 0);
+    rootDoc.isRoot = true;
+    rootDoc.indexParent = 0;
+    documentSchema schema2 = initSchema(4);
+    addBooleanToSchema(&schema2, "bool1", 1);
+    addDoubleToSchema(&schema2, "double6", 1.5);
+    addIntToSchema(&schema2, "key1", 1);
+    addTextToSchema(&schema2, "key2", "hi");
+    createDocument(pFile, "test1", &schema2, rootDoc);
+    finish(pFile);
+
     while (1) {
         sock = accept(listener, NULL, NULL);
+        pFile = init("/tmp/server1.zgdb");
         if (sock < 0) {
             perror("accept");
             exit(3);
@@ -39,14 +53,17 @@ int main(int argc, char** argv) {
 
         while (1) {
             bytes_read = recv(sock, &msgSize, sizeof(int), 0);
-            if (bytes_read <= 0) break;
+            if (bytes_read <= 0)
+                break;
 
             char buf[msgSize];
             bytes_read = recv(sock, buf, msgSize, 0);
-            if (bytes_read <= 0) break;
+            if (bytes_read <= 0)
+                break;
 
-            xmlDocPtr pDoc = xmlReadMemory(buf, msgSize, 0, NULL, XML_PARSE_RECOVER);
-            xmlSaveFormatFileEnc("-", pDoc, "UTF-8", 1);
+            xmlDocPtr doc = xmlReadMemory(buf, msgSize, 0, NULL, XML_PARSE_RECOVER);
+            executeZgdbFromXml(doc, pFile);
+            xmlFreeDoc(doc);
 
             char message[] = "Hello there from server!\n";
             msgSize = sizeof(message);
@@ -54,7 +71,8 @@ int main(int argc, char** argv) {
             send(sock, &msgSize, sizeof(int), 0);
             send(sock, message, msgSize, 0);
         }
-
+        printf("%s", "finished");
+        finish(pFile);
         close(sock);
     }
     return 0;

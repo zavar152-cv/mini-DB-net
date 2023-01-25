@@ -50,7 +50,8 @@ typedef enum compOperator {
  */
 typedef enum predicateType {
     BY_DOCUMENT_NUMBER = 0,
-    BY_ELEMENT_VALUE
+    BY_ELEMENT_VALUE,
+    BY_ELEMENT
 } predicateType;
 
 typedef struct checkType {
@@ -58,6 +59,12 @@ typedef struct checkType {
     compOperator operator;
     char* input;
 } checkType;
+
+typedef struct checkElement {
+    char key1[13];
+    compOperator operator;
+    char key2[13];
+} checkElement;
 
 typedef struct predicate predicate;
 
@@ -69,6 +76,7 @@ typedef struct predicate {
     union {
         uint64_t index;
         checkType byValue;
+        checkElement byElement;
     };
 } predicate;
 
