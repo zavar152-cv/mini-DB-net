@@ -1,1 +1,1 @@
-JOIN [@"key"="2"]|[@"key2"<="3"] ON /"test1"/"new"[@"key3"="lol"]
+UPDATE @"key" "3" /"test1"/"new"[@"key3"="lol"];

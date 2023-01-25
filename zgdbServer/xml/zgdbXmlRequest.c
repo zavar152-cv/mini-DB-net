@@ -239,7 +239,24 @@ findIfResult executeDeleteFromXml(xmlNodePtr root, zgdbFile* file) {
 }
 
 updateElementStatus executeUpdateFromXml(xmlNodePtr root, zgdbFile* file) {
+    xmlNodePtr pathNode = root->last;
 
+    xmlChar* pathSizeChar = xmlGetProp(pathNode, BAD_CAST "size");
+    int64_t pSize;
+    str2long(&pSize, (char*) pathSizeChar);
+    path p;
+    if(pSize != 0) {
+        p = createPath(pSize);
+        createPathFromXml(pathNode, &p);
+    }
+
+    findIfResult ifResult = findIfFromRoot(file, p);
+    destroyPath(&p);
+
+    xmlNodePtr elementNode = root->children;
+    xmlChar* nameChar = xmlGetProp(elementNode, BAD_CAST "name");
+    xmlChar* newValueChar = xmlGetProp(elementNode, BAD_CAST "newValue");
+    return updateElement(file, ifResult.documentList.head->document, (char*) nameChar, (char*) newValueChar);
 }
 
 findIfResult executeFindFromXml(xmlNodePtr root, zgdbFile* file) {
