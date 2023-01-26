@@ -1,9 +1,10 @@
+ADD "zavar" (STR:@"name":"Yaroslav", INT:@"age":20) /"test2";
 FIND /@"key2";
-UPDATE @"key2" "2.0" /"test2";
+UPDATE @"key" "4" /"test2";
 
-JOIN /"";
+JOIN /""[@"key"=4];
 DELETE /"test2";
-ADD "test2" (INT:@"key":2, DBL:@"key2":3.5) /"";
+ADD "zavar" (INT:@"name":"Yaroslav", DBL:@"age":20) /"test2";
 
 
 

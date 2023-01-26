@@ -37,19 +37,7 @@ int main(int argc, char** argv) {
 
     listen(listener, 1);
 
-    zgdbFile* pFile = init(argv[1]);
-
-    document rootDoc;
-    rootDoc.header = getDocumentHeader(pFile, 0);
-    rootDoc.isRoot = true;
-    rootDoc.indexParent = 0;
-    documentSchema schema2 = initSchema(4);
-    addBooleanToSchema(&schema2, "bool1", 1);
-    addDoubleToSchema(&schema2, "double6", 1.5);
-    addIntToSchema(&schema2, "key1", 1);
-    addTextToSchema(&schema2, "key2", "hi");
-    createDocument(pFile, "test1", &schema2, rootDoc);
-    finish(pFile);
+    zgdbFile* pFile;
 
     while (1) {
         sock = accept(listener, NULL, NULL);

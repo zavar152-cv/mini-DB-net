@@ -195,7 +195,7 @@ void zpathToXml(xmlDocPtr doc, ast* tree) {
     sprintf(sizeChar, "%zu", tree->path.size);
     xmlNewProp(path, BAD_CAST "size", BAD_CAST sizeChar);
     zpathPathToXml(doc, path, tree->path.firstStep);
-    //xmlSaveFormatFileEnc("-", doc, "UTF-8", 1);
+    xmlSaveFormatFileEnc("-", doc, "UTF-8", 1);
 }
 
 void printInfo(xmlNodePtr child) {
