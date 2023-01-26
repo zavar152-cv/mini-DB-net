@@ -7,6 +7,16 @@
 #include "zgdbXmlRequest.h"
 
 int main(int argc, char** argv) {
+    uint16_t port = 25562;
+    if (argc > 2) {
+        int64_t t;
+        str2long(&t, argv[2]);
+        port = (uint16_t) t;
+    } else {
+        printf("Enter port\n");
+        exit(1);
+    }
+
     int sock, listener;
     struct sockaddr_in addr;
     size_t bytes_read;
@@ -18,7 +28,7 @@ int main(int argc, char** argv) {
     }
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(25562);
+    addr.sin_port = htons(port);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(listener, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
         perror("bind");
@@ -27,7 +37,7 @@ int main(int argc, char** argv) {
 
     listen(listener, 1);
 
-    zgdbFile* pFile = init("/tmp/server3.zgdb");
+    zgdbFile* pFile = init(argv[1]);
 
     document rootDoc;
     rootDoc.header = getDocumentHeader(pFile, 0);

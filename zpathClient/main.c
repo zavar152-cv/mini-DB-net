@@ -9,13 +9,41 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <ctype.h>
+
+typedef enum str2intStatus {
+    STR2INT_SUCCESS,
+    STR2INT_OVERFLOW,
+    STR2INT_UNDERFLOW,
+    STR2INT_INCONVERTIBLE
+} str2intStatus;
+
+str2intStatus str2long(int64_t *out, char *s) {
+    char *end;
+    if (s[0] == '\0' || isspace(s[0]))
+        return STR2INT_INCONVERTIBLE;
+    errno = 0;
+    int64_t l = strtol(s, &end, 10);
+    if (l > INT32_MAX || errno == ERANGE)
+        return STR2INT_OVERFLOW;
+    if (l < INT32_MIN || errno == ERANGE)
+        return STR2INT_UNDERFLOW;
+    if (*end != '\0')
+        return STR2INT_INCONVERTIBLE;
+    *out = l;
+    return STR2INT_SUCCESS;
+}
 
 int main(int argc, char** argv) {
+    uint32_t ip = INADDR_LOOPBACK;
+    uint16_t port = 25562;
     if (argc > 1) {
-        yyin = fopen(argv[1], "r");
-        if (yyin == NULL) {
-            printf("syntax: %outXml filename\n", argv[0]);
-        }
+        int64_t t;
+        str2long(&t, argv[1]);
+        port = (uint16_t) t;
+    } else {
+        printf("Enter port\n");
+        exit(1);
     }
 
     int sock;
@@ -28,8 +56,8 @@ int main(int argc, char** argv) {
     }
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(25562);
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(ip);
     if (connect(sock, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
         perror("connect");
         exit(2);
@@ -55,7 +83,6 @@ int main(int argc, char** argv) {
         send(sock, &msgSize, sizeof(int), 0);
         send(sock, out, msgSize, 0);
 
-
         bytes_read = recv(sock, &msgSize, sizeof(int), 0);
         if (bytes_read <= 0) return 0;
 
@@ -65,7 +92,7 @@ int main(int argc, char** argv) {
 
         xmlDocPtr answer = xmlReadMemory(buf, msgSize, 0, NULL, XML_PARSE_RECOVER);
         printAnswer(answer);
-        xmlSaveFormatFileEnc("-", answer, "UTF-8", 1);
+        //xmlSaveFormatFileEnc("-", answer, "UTF-8", 1);
         xmlFree(outXml);
         xmlFreeDoc(doc);
     }
