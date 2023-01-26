@@ -1,4 +1,6 @@
 FIND /@"key2";
+UPDATE @"key2" "2.0" /"test2";
+
 JOIN /"";
 DELETE /"test2";
 ADD "test2" (INT:@"key":2, DBL:@"key2":3.5) /"";

@@ -213,7 +213,15 @@ void printDoc(xmlNodePtr child) {
 }
 
 void printEl(xmlNodePtr child) {
-
+    xmlNodePtr temp = child;
+    while(temp != NULL) {
+        xmlChar* string = xmlNodeGetContent(temp);
+        xmlChar* type = xmlGetProp(temp, BAD_CAST "type");
+        xmlChar* value = xmlGetProp(temp, BAD_CAST "value");
+        xmlChar* doc = xmlGetProp(temp, BAD_CAST "document");
+        printf("Element: %s, type: %s, value: %s, doc: %s\n", (char*) string, (char*) type, (char*) value, (char*) doc);
+        temp = temp->next;
+    }
 }
 
 void printAnswer(xmlDocPtr doc) {
