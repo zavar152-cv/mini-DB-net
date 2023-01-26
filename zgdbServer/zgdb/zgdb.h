@@ -66,6 +66,8 @@ findIfResult findIfFromRoot(zgdbFile* file, path p);
 
 resultList join(zgdbFile* file, document parent, predicate* p);
 
+document parent(zgdbFile* file, document doc);
+
 void str2boolean(uint8_t *out, char *s);
 
 str2doubleStatus str2double(double *out, char *s);

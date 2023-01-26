@@ -545,13 +545,19 @@ void findIf0(zgdbFile* file, uint64_t order, uint64_t orderParent, path p, findI
     resultList contextList = createResultList();
     if (hasNextDoc(&rootIterator)) {
         document root = nextDoc(file, &rootIterator, &depth);//skip root
-        if(p.size == 1 && p.steps[0].sType == DOCUMENT_STEP && !strcmp(p.steps[0].stepName, "")) {
+        if(p.size == 1 && p.steps[0].sType == DOCUMENT_STEP && p.steps[0].pType == ABSOLUTE_PATH && !strcmp(p.steps[0].stepName, "")) {
             ifResult->type = DOCUMENT_RESULT;
             insertResult(&ifResult->documentList, root);
             destroyDocIterator(&rootIterator);
             destroyResultList(&contextList);
             return;
+        } else if(p.size == 1 && p.steps[0].sType == DOCUMENT_STEP && p.steps[0].pType == RELATIVE_PATH && !strcmp(p.steps[0].stepName, "")) {
+            ifResult->type = DOCUMENT_RESULT;
+            resultList list = join(file, root, NULL);
+            ifResult->documentList = list;
+            return;
         }
+        
     }
     if (hasNextDoc(&rootIterator)) {
         insertResult(&contextList, nextDoc(file, &rootIterator, &depth));
@@ -705,10 +711,16 @@ resultList join(zgdbFile* file, document parent, predicate* p) {
         }
         docNumber++;
     }
-
-
-
     return pList;
+}
+
+document parent(zgdbFile* file, document doc) {
+    document temp;
+    documentHeader tempHeader = getDocumentHeader(file, doc.indexParent);
+    temp.header = tempHeader;
+    temp.isRoot = isRootDocumentHeader(tempHeader);
+    temp.indexParent = doc.indexParent; // only for this
+    return temp;
 }
 
 findIfResult findIfFromRoot(zgdbFile* file, path p) {

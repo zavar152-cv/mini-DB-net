@@ -256,6 +256,8 @@ updateElementStatus executeUpdateFromXml(xmlNodePtr root, zgdbFile* file) {
     xmlNodePtr elementNode = root->children;
     xmlChar* nameChar = xmlGetProp(elementNode, BAD_CAST "name");
     xmlChar* newValueChar = xmlGetProp(elementNode, BAD_CAST "newValue");
+    if(ifResult.type == UNDEFINED_RESULT)
+        return DOCUMENT_NOT_FOUND;
     return updateElement(file, ifResult.documentList.head->document, (char*) nameChar, (char*) newValueChar);
 }
 
@@ -308,8 +310,20 @@ resultList executeJoinFromXml(xmlNodePtr root, zgdbFile* file) {
 
 }
 
-void executeParentFromXml(xmlNodePtr root, zgdbFile* file) {
-    
+document executeParentFromXml(xmlNodePtr root, zgdbFile* file) {
+    xmlNodePtr pathNode = root->last;
+
+    xmlChar* pathSizeChar = xmlGetProp(pathNode, BAD_CAST "size");
+    int64_t pSize;
+    str2long(&pSize, (char*) pathSizeChar);
+    path p;
+    if(pSize != 0) {
+        p = createPath(pSize);
+        createPathFromXml(pathNode, &p);
+    }
+
+    findIfResult ifResult = findIfFromRoot(file, p);
+    return parent(file, ifResult.documentList.head->document);
 }
 
 xmlDocPtr executeZgdbFromXml(xmlDocPtr doc, zgdbFile* file) {
@@ -323,12 +337,14 @@ xmlDocPtr executeZgdbFromXml(xmlDocPtr doc, zgdbFile* file) {
     } else if (!xmlStrcmp(string, BAD_CAST "update")) {
         executeUpdateFromXml(root, file);
     } else if (!xmlStrcmp(string, BAD_CAST "find")) {
-        executeFindFromXml(root, file);
+        findIfResult ifResult = executeFindFromXml(root, file);
+        ifResult.documentList;
     } else if (!xmlStrcmp(string, BAD_CAST "join")) {
         resultList list = executeJoinFromXml(root, file);
         list.head->document;
     } else if (!xmlStrcmp(string, BAD_CAST "parent")) {
-        executeParentFromXml(root, file); //TODO
+        document xml = executeParentFromXml(root, file);
+        documentHeader header = xml.header;
     }
     xmlSaveFormatFileEnc("-", doc, "UTF-8", 1);
     return NULL;
