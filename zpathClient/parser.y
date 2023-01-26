@@ -62,7 +62,7 @@ add: ADD STRING {createAddRequest($2);}
 update: UPDATE KEY STRING {createUpdateRequest($2, $3);}
 delete: DELETE {createDeleteRequest();}
 find: FIND {createFindRequest();}
-join: JOIN {createJoinRequest();} jpredicates ON
+join: JOIN {createJoinRequest();} jpredicates ON | JOIN {createJoinRequest();}
 parent: PARENT {createParentRequest();}
 
 schema: LROBRAC elements RROBRAC

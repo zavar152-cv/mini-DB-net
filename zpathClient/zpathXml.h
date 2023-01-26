@@ -7,4 +7,6 @@
 
 void zpathToXml(xmlDocPtr doc, ast* tree);
 
+void printAnswer(xmlDocPtr doc);
+
 #endif

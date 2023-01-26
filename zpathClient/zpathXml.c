@@ -197,3 +197,52 @@ void zpathToXml(xmlDocPtr doc, ast* tree) {
     zpathPathToXml(doc, path, tree->path.firstStep);
     xmlSaveFormatFileEnc("-", doc, "UTF-8", 1);
 }
+
+void printInfo(xmlNodePtr child) {
+    xmlChar* pathSizeChar = xmlNodeGetContent(child);
+    printf("%s\n", (char*) pathSizeChar);
+}
+
+void printDoc(xmlNodePtr child) {
+    xmlNodePtr temp = child;
+    while(temp != NULL) {
+        xmlChar* string = xmlNodeGetContent(temp);
+        printf("Document: %s\n", (char*) string);
+        temp = temp->next;
+    }
+}
+
+void printEl(xmlNodePtr child) {
+
+}
+
+void printAnswer(xmlDocPtr doc) {
+    xmlNodePtr root = xmlDocGetRootElement(doc);
+    xmlChar* string = xmlGetProp(root, BAD_CAST "type");
+    if(!xmlStrcmp(string, BAD_CAST "createStatus")) {
+        printf("CREATE:\n");
+        printInfo(root->children);
+    } else if(!xmlStrcmp(string, BAD_CAST "deleteStatus")) {
+        printf("DELETE:\n");
+        printInfo(root->children);
+    } else if(!xmlStrcmp(string, BAD_CAST "updateStatus")) {
+        printf("UPDATE:\n");
+        printInfo(root->children);
+    } else if(!xmlStrcmp(string, BAD_CAST "findStatus")) {
+        printf("FIND:\n");
+        xmlChar* pathSizeChar = xmlNodeGetContent(root->children);
+        if(!xmlStrcmp(pathSizeChar, BAD_CAST "DOCUMENT")) {
+            printDoc(root->children->next);
+        } else if(!xmlStrcmp(pathSizeChar, BAD_CAST "ELEMENT")) {
+            printEl(root->children->next);
+        } else {
+            printInfo(root->children);
+        }
+    } else if(!xmlStrcmp(string, BAD_CAST "joinStatus")) {
+        printf("JOIN:\n");
+        printDoc(root->children);
+    } else if(!xmlStrcmp(string, BAD_CAST "parentStatus")) {
+        printf("PARENT:\n");
+        printDoc(root->children);
+    }
+}

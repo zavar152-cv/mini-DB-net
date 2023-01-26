@@ -234,6 +234,9 @@ findIfResult executeDeleteFromXml(xmlNodePtr root, zgdbFile* file) {
     findIfResult ifResult = findIfFromRoot(file, p);
     destroyPath(&p);
 
+    if(ifResult.type == UNDEFINED_RESULT)
+        return ifResult;
+
     deleteDocument(file, ifResult.documentList.head->document);
     return ifResult;
 }
@@ -329,23 +332,128 @@ document executeParentFromXml(xmlNodePtr root, zgdbFile* file) {
 xmlDocPtr executeZgdbFromXml(xmlDocPtr doc, zgdbFile* file) {
     xmlNodePtr root = xmlDocGetRootElement(doc);
     xmlChar* string = xmlGetProp(root, BAD_CAST "type");
-
+    xmlDocPtr answer = xmlNewDoc(BAD_CAST "1.0");
+    xmlNodePtr rootAnswer = xmlNewNode(NULL, BAD_CAST "answer");
+    xmlDocSetRootElement(answer, rootAnswer);
+    
     if (!xmlStrcmp(string, BAD_CAST "add")) {
-        executeAddFromXml(root, file);
+        createStatus status = executeAddFromXml(root, file);
+        xmlNewProp(rootAnswer, BAD_CAST "type", BAD_CAST "createStatus");
+        switch (status) {
+            case CREATE_OK:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "CREATE OK");
+                break;
+            case OUT_OF_INDEX:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "OUT OF INDEX");
+                break;
+            case CREATE_FAILED:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "CREATE FAILED");
+                break;
+        }
     } else if (!xmlStrcmp(string, BAD_CAST "delete")) {
-        executeDeleteFromXml(root, file);
+        findIfResult ifResult = executeDeleteFromXml(root, file);
+        xmlNewProp(rootAnswer, BAD_CAST "type", BAD_CAST "deleteStatus");
+        switch (ifResult.type) {
+            case UNDEFINED_RESULT:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "DOCUMENT NOT FOUND");
+                break;
+            case DOCUMENT_RESULT:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "DOCUMENT DELETED");
+                break;
+            case ELEMENT_RESULT:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "WTF (ELEMENT?)");
+                break;
+        }
     } else if (!xmlStrcmp(string, BAD_CAST "update")) {
-        executeUpdateFromXml(root, file);
+        updateElementStatus status = executeUpdateFromXml(root, file);
+        xmlNewProp(rootAnswer, BAD_CAST "type", BAD_CAST "updateStatus");
+        switch (status) {
+            case UPDATE_OK:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "UPDATE OK");
+                break;
+            case ELEMENT_NOT_FOUND:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "ELEMENT NOT FOUND");
+                break;
+            case INVALID_NAME:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "INVALID NAME");
+                break;
+            case TYPE_PARSE_ERROR:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "TYPE PARSE ERROR");
+                break;
+            case DOCUMENT_NOT_FOUND:
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "DOCUMENT NOT FOUND");
+                break;
+        }
     } else if (!xmlStrcmp(string, BAD_CAST "find")) {
         findIfResult ifResult = executeFindFromXml(root, file);
-        ifResult.documentList;
+        xmlNewProp(rootAnswer, BAD_CAST "type", BAD_CAST "findStatus");
+        switch (ifResult.type) {
+            case UNDEFINED_RESULT: {
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "UNDEFINED RESULT");
+                break;
+            }
+            case DOCUMENT_RESULT: {
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "DOCUMENT");
+                result* tempRes = ifResult.documentList.head;
+                while (tempRes != NULL) {
+                    xmlNewChild(rootAnswer, NULL, BAD_CAST "document", BAD_CAST tempRes->document.header.name);
+                    tempRes = tempRes->next;
+                }
+                break;
+            }
+            case ELEMENT_RESULT: {
+                xmlNewChild(rootAnswer, NULL, BAD_CAST "info", BAD_CAST "ELEMENT");
+                eLresult* tempRes = ifResult.elementList.head;
+                while (tempRes != NULL) {
+                    xmlNodePtr child = xmlNewChild(rootAnswer, NULL, BAD_CAST "element", BAD_CAST tempRes->el.key);
+                    switch (tempRes->el.type) {
+                        case TYPE_INT: {
+                            xmlNewProp(child, BAD_CAST "type", BAD_CAST "INT");
+                            char sizeChar[50];
+                            sprintf(sizeChar, "%d", tempRes->el.integerValue);
+                            xmlNewProp(child, BAD_CAST "value", BAD_CAST sizeChar);
+                            break;
+                        }
+                        case TYPE_TEXT: {
+                            xmlNewProp(child, BAD_CAST "type", BAD_CAST "TEXT");
+                            xmlNewProp(child, BAD_CAST "value", BAD_CAST tempRes->el.textValue.data);
+                            break;
+                        }
+                        case TYPE_DOUBLE: {
+                            xmlNewProp(child, BAD_CAST "type", BAD_CAST "DOUBLE");
+                            char sizeChar[50];
+                            sprintf(sizeChar, "%f", tempRes->el.doubleValue);
+                            xmlNewProp(child, BAD_CAST "value", BAD_CAST sizeChar);
+                            break;
+                        }
+                        case TYPE_BOOLEAN: {
+                            xmlNewProp(child, BAD_CAST "type", BAD_CAST "BOOLEAN");
+                            char sizeChar[50];
+                            sprintf(sizeChar, "%d", tempRes->el.booleanValue);
+                            xmlNewProp(child, BAD_CAST "value", BAD_CAST sizeChar);
+                            break;
+                        }
+                    }
+                    xmlNewProp(child, BAD_CAST "document", BAD_CAST tempRes->document.header.name);
+                    tempRes = tempRes->next;
+                }
+                break;
+            }
+        }
+
     } else if (!xmlStrcmp(string, BAD_CAST "join")) {
         resultList list = executeJoinFromXml(root, file);
-        list.head->document;
+        xmlNewProp(rootAnswer, BAD_CAST "type", BAD_CAST "joinStatus");
+        result* tempRes = list.head;
+        while (tempRes != NULL) {
+            xmlNewChild(rootAnswer, NULL, BAD_CAST "document", BAD_CAST tempRes->document.header.name);
+            tempRes = tempRes->next;
+        }
     } else if (!xmlStrcmp(string, BAD_CAST "parent")) {
         document xml = executeParentFromXml(root, file);
-        documentHeader header = xml.header;
+        xmlNewProp(rootAnswer, BAD_CAST "type", BAD_CAST "parentStatus");
+        xmlNewChild(rootAnswer, NULL, BAD_CAST "document", BAD_CAST xml.header.name);
     }
     xmlSaveFormatFileEnc("-", doc, "UTF-8", 1);
-    return NULL;
+    return answer;
 }

@@ -1,1 +1,8 @@
-PARENT //"test1";
+FIND /@"key2";
+JOIN /"";
+DELETE /"test2";
+ADD "test2" (INT:@"key":2, DBL:@"key2":3.5) /"";
+
+
+
+

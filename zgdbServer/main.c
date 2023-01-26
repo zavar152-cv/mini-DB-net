@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     }
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(25561);
+    addr.sin_port = htons(25562);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(listener, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
         perror("bind");
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
 
     listen(listener, 1);
 
-    zgdbFile* pFile = init("/tmp/server1.zgdb");
+    zgdbFile* pFile = init("/tmp/server3.zgdb");
 
     document rootDoc;
     rootDoc.header = getDocumentHeader(pFile, 0);
@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
 
         int msgSize = 0;
 
+        printf("%s", "Client connected\n");
         while (1) {
             bytes_read = recv(sock, &msgSize, sizeof(int), 0);
             if (bytes_read <= 0)
@@ -61,17 +62,21 @@ int main(int argc, char** argv) {
             if (bytes_read <= 0)
                 break;
 
-            xmlDocPtr doc = xmlReadMemory(buf, msgSize, 0, NULL, XML_PARSE_RECOVER);
-            executeZgdbFromXml(doc, pFile);
-            xmlFreeDoc(doc);
+            xmlDocPtr request = xmlReadMemory(buf, msgSize, 0, NULL, XML_PARSE_RECOVER);
+            xmlDocPtr answer = executeZgdbFromXml(request, pFile);
+            xmlFreeDoc(request);
 
-            char message[] = "Hello there from server!\n";
-            msgSize = sizeof(message);
+            xmlChar* outXml;
+            int size;
+            xmlDocDumpMemory(answer, &outXml, &size);
+            msgSize = size;
+
+            char* out = (char*) outXml;
 
             send(sock, &msgSize, sizeof(int), 0);
-            send(sock, message, msgSize, 0);
+            send(sock, out, msgSize, 0);
         }
-        printf("%s", "finished");
+        printf("%s", "Client disconnected\n");
         finish(pFile);
         close(sock);
     }
